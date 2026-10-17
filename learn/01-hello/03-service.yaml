@@ -1,0 +1,12 @@
+# A Service gives the Pods one stable name and IP (hello.hello.svc) and load-balances between them.
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello
+  namespace: hello
+spec:
+  selector:
+    app: hello           # targets every Pod with this label
+  ports:
+    - port: 80
+      targetPort: 80

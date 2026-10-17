@@ -1,0 +1,13 @@
+# A ConfigMap holds non-secret configuration. Here: the HTML page nginx will serve.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hello-html
+  namespace: hello
+data:
+  index.html: |
+    <!doctype html>
+    <html><body style="font-family:sans-serif;text-align:center;margin-top:15vh">
+      <h1>🏛️ Welcome to Olympus</h1>
+      <p>Served by nginx, running in a Pod, inside your kind cluster.</p>
+    </body></html>

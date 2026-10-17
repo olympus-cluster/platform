@@ -1,0 +1,9 @@
+# Local secrets — never commit
+.env
+
+# Personal overrides
+*.local.yaml
+
+# IDE settings
+.idea/
+.vscode/

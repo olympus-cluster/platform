@@ -1,0 +1,25 @@
+# kind cluster "olympus": 1 control-plane + 1 worker, running as Docker containers.
+# Create:  kind create cluster --config cluster/kind-config.yaml
+# Delete:  kind delete cluster --name olympus
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: olympus
+containerdConfigPatches:
+  # Lets nodes pull from the local registry (localhost:5001) we add in Phase 2.
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      config_path = "/etc/containerd/certs.d"
+nodes:
+  - role: control-plane
+    labels:
+      ingress-ready: "true"
+    # Traffic to http://*.localtest.me (127.0.0.1:80/443) on Windows enters the
+    # cluster here and reaches Traefik's NodePorts 30080/30443.
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 80
+        listenAddress: "127.0.0.1"
+      - containerPort: 30443
+        hostPort: 443
+        listenAddress: "127.0.0.1"
+  - role: worker

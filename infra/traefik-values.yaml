@@ -1,0 +1,25 @@
+# Helm values for Traefik, the ingress controller (the "front door" of the cluster).
+# Install: helm upgrade --install traefik traefik/traefik -n traefik --create-namespace -f infra/traefik-values.yaml
+service:
+  spec:
+    type: NodePort
+ports:
+  web:
+    nodePort: 30080
+  websecure:
+    nodePort: 30443
+# Run on the control-plane node, the one that owns the 80/443 port mappings.
+nodeSelector:
+  ingress-ready: "true"
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+ingressRoute:
+  dashboard:
+    enabled: true
+    matchRule: Host(`traefik.localtest.me`)
+    entryPoints: ["web"]

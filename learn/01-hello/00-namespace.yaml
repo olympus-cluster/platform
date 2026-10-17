@@ -1,0 +1,5 @@
+# A Namespace is a folder for Kubernetes objects. Everything for this lesson lives in "hello".
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hello
