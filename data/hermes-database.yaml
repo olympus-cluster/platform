@@ -1,0 +1,11 @@
+# Database "hermes" owned by role "hermes" (role declared under managed.roles in postgres.yaml).
+# Used by hermes-audiobooks-api.  Status: kubectl -n data get database hermes
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: hermes
+spec:
+  cluster:
+    name: pg
+  name: hermes
+  owner: hermes

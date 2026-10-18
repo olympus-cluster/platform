@@ -7,3 +7,5 @@ resources:
   - postgres.yaml
   - mongo.yaml
   - redis.yaml
+  - rustfs.yaml
+  - hermes-database.yaml

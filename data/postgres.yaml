@@ -18,6 +18,14 @@ spec:
       owner: app
       secret:
         name: pg-app
+  # One login role per app; each app also gets a Database object (e.g. hermes-database.yaml).
+  managed:
+    roles:
+      - name: hermes            # hermes-audiobooks-api
+        ensure: present
+        login: true
+        passwordSecret:
+          name: hermes-db
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits: { memory: 1Gi }

@@ -78,10 +78,11 @@ Exec helm upgrade --install metrics-server metrics-server/metrics-server --versi
 
 Step 'Namespaces and secrets'
 Exec kubectl apply -f cluster/namespaces.yaml
+Exec kubectl apply -f cluster/apps-middlewares.yaml
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'secrets.ps1')
 if ($LASTEXITCODE -ne 0) { exit 1 }
 
-Step 'Databases: PostgreSQL, MongoDB, Redis'
+Step 'Databases and storage: PostgreSQL, MongoDB, Redis, RustFS (S3)'
 # The CNPG webhook can need a few seconds after install, so retry.
 for ($i = 1; $i -le 10; $i++) {
     kubectl apply -k data
@@ -91,6 +92,7 @@ for ($i = 1; $i -le 10; $i++) {
 if ($LASTEXITCODE -ne 0) { Write-Host 'FAILED: kubectl apply -k data' -ForegroundColor Red; exit 1 }
 Exec kubectl -n data rollout status statefulset/mongo --timeout 5m
 Exec kubectl -n data rollout status statefulset/redis --timeout 5m
+Exec kubectl -n data rollout status statefulset/rustfs --timeout 5m
 Write-Host 'waiting for PostgreSQL cluster pg to be ready (first time pulls the image, ~1-2 min)...'
 Exec kubectl -n data wait --for=condition=Ready cluster/pg --timeout 8m
 
@@ -108,6 +110,7 @@ Write-Host @"
   pgAdmin     http://pgadmin.localtest.me
   Mongo UI    http://mongo.localtest.me
   Redis UI    http://redis.localtest.me
+  S3 console  http://s3.localtest.me     (S3_ACCESS_KEY / S3_SECRET_KEY)
   Registry    localhost:$RegistryPort
   Passwords   $root\.env
 Run scripts\verify.ps1 to check everything.

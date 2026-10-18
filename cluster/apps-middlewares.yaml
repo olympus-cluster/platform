@@ -1,0 +1,13 @@
+# Shared Traefik middlewares for apps in namespace "apps".
+# Use from an Ingress:  traefik.ingress.kubernetes.io/router.middlewares: apps-retry@kubernetescrd
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: retry
+  namespace: apps
+spec:
+  # Re-send a request that hit a closed/refused connection (a Pod shutting down during a rollout)
+  # to another Pod. Only network errors are retried, never HTTP error responses.
+  retry:
+    attempts: 3
+    initialInterval: 100ms

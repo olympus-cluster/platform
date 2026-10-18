@@ -16,7 +16,7 @@ function Check([string]$Name, [scriptblock]$Test) {
 function HttpCode([string]$Url) { curl.exe -s -o NUL -w '%{http_code}' --max-time 10 $Url }
 
 $cfg = @{}
-Get-Content (Join-Path $root '.env') | Where-Object { $_ -match '^\s*[A-Z_]+=' } | ForEach-Object {
+Get-Content (Join-Path $root '.env') | Where-Object { $_ -match '^\s*[A-Z0-9_]+=' } | ForEach-Object {
     $k, $v = $_ -split '=', 2; $cfg[$k.Trim()] = $v.Trim()
 }
 
@@ -42,6 +42,16 @@ Check 'Redis ping' {
     (kubectl -n data exec redis-0 -- redis-cli -a $cfg.REDIS_PASSWORD --no-auth-warning ping) -eq 'PONG'
 }
 
+Check 'RustFS (S3) health' {
+    (kubectl -n data exec rustfs-0 -- curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:9000/health) -eq '200'
+}
+Check 'database hermes applied' { (kubectl -n data get database hermes -o jsonpath='{.status.applied}') -eq 'true' }
+
+Write-Host "`n-- Apps"
+Check 'hermes.localtest.me (hermes-audiobooks-api)' {
+    (curl.exe -s --max-time 10 http://hermes.localtest.me/actuator/health/readiness) -match '"status":"UP"'
+}
+
 Write-Host "`n-- Web UIs (through Traefik)"
 Check 'hello.localtest.me (lesson 1, optional)' { (HttpCode 'http://hello.localtest.me') -in '200', '404' }
 Check 'traefik.localtest.me/dashboard/' { (HttpCode 'http://traefik.localtest.me/dashboard/') -eq '200' }
@@ -49,6 +59,7 @@ Check 'headlamp.localtest.me' { (HttpCode 'http://headlamp.localtest.me') -eq '2
 Check 'pgadmin.localtest.me' { (HttpCode 'http://pgadmin.localtest.me/misc/ping') -eq '200' }
 Check 'mongo.localtest.me (asks for login)' { (HttpCode 'http://mongo.localtest.me') -eq '401' }
 Check 'redis.localtest.me' { (HttpCode 'http://redis.localtest.me') -eq '200' }
+Check 's3.localtest.me (RustFS console)' { (HttpCode 'http://s3.localtest.me') -in '200', '301', '302', '307' }
 
 if ($script:failed -eq 0) { Write-Host "`nAll checks passed." -ForegroundColor Green; exit 0 }
 Write-Host "`n$($script:failed) check(s) failed. Try: kubectl get pods -A, then kubectl describe / logs on the failing Pod." -ForegroundColor Yellow
