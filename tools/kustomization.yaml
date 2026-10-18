@@ -1,0 +1,8 @@
+# Admin web UIs for the databases. Apply with: kubectl apply -k tools
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: tools
+resources:
+  - pgadmin.yaml
+  - mongo-express.yaml
+  - redisinsight.yaml

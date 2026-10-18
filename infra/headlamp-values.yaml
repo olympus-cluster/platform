@@ -1,0 +1,10 @@
+# Headlamp - a web dashboard for the whole cluster at http://headlamp.localtest.me
+# Log in with a token:  kubectl create token headlamp -n tools --duration 24h
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  hosts:
+    - host: headlamp.localtest.me
+      paths:
+        - path: /
+          type: Prefix

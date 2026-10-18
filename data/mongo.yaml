@@ -1,0 +1,58 @@
+# MongoDB as a StatefulSet: like a Deployment, but each Pod keeps a stable name
+# (mongo-0) and its own disk (PVC) across restarts - what databases need.
+#
+# Inside the cluster connect to:  mongodb://<user>:<pass>@mongo.data.svc:27017/?authSource=admin
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  clusterIP: None         # "headless": DNS points straight at the Pod (mongo-0.mongo)
+  selector:
+    app: mongo
+  ports:
+    - port: 27017
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+spec:
+  serviceName: mongo
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:8.0
+          args: ["--wiredTigerCacheSizeGB", "0.25"]   # keep RAM use small
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom: { secretKeyRef: { name: mongo-root, key: username } }
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom: { secretKeyRef: { name: mongo-root, key: password } }
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 1Gi }
+          readinessProbe:
+            tcpSocket: { port: 27017 }
+            initialDelaySeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+  volumeClaimTemplates:     # one PVC per Pod: data-mongo-0
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi

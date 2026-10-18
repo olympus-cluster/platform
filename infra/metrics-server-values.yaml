@@ -1,0 +1,4 @@
+# metrics-server collects CPU/RAM per Pod and node: enables `kubectl top` and graphs in Headlamp/k9s.
+# kind's kubelets use self-signed certs, so skip TLS verification (local lab only).
+args:
+  - --kubelet-insecure-tls

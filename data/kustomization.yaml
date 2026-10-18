@@ -1,0 +1,9 @@
+# Kustomize: "apply this list of files, all into namespace data".
+# Apply with: kubectl apply -k data
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: data
+resources:
+  - postgres.yaml
+  - mongo.yaml
+  - redis.yaml

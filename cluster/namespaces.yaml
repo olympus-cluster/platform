@@ -1,0 +1,15 @@
+# data  = databases          apps  = your APIs and portals          tools = admin UIs
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apps
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tools

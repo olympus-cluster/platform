@@ -6,18 +6,28 @@ databases, Spring Boot / FastAPI APIs and Angular SSR portals.
 
 | Folder | What's inside |
 |---|---|
-| `cluster/` | `kind-config.yaml` — the cluster definition (1 control-plane + 1 worker, ports 80/443) |
-| `infra/` | Helm values for shared components (Traefik ingress, …) |
-| `learn/` | Step-by-step lessons — start with [`learn/01-hello`](learn/01-hello/README.md) |
+| `cluster/` | `kind-config.yaml` (1 control-plane + 1 worker, ports 80/443), namespaces, local-registry wiring |
+| `infra/` | Helm values for shared components: Traefik, metrics-server, Headlamp |
+| `data/` | PostgreSQL (CloudNativePG), MongoDB, Redis — `kubectl apply -k data` |
+| `tools/` | pgAdmin, mongo-express, RedisInsight — `kubectl apply -k tools` |
+| `scripts/` | `up.ps1` · `down.ps1` · `verify.ps1` · `secrets.ps1` |
+| `learn/` | Step-by-step lessons: [01 hello](learn/01-hello/README.md) · [02 data](learn/02-data/README.md) |
 
 ## Quick start
 
+Requires Docker Desktop (WSL2), kind, kubectl and helm.
+
 ```powershell
-kind create cluster --config cluster/kind-config.yaml
-helm repo add traefik https://traefik.github.io/charts
-helm upgrade --install traefik traefik/traefik -n traefik --create-namespace -f infra/traefik-values.yaml
-kubectl apply -f learn/01-hello/
-# open http://hello.localtest.me
+powershell -ExecutionPolicy Bypass -File scripts\up.ps1      # build everything (~8 min from scratch)
+powershell -ExecutionPolicy Bypass -File scripts\verify.ps1  # check everything
 ```
 
-Coming next: a local image registry, `scripts/up.ps1`, and PostgreSQL / MongoDB / Redis.
+| URL | What |
+|---|---|
+| http://headlamp.localtest.me | Cluster dashboard (`kubectl create token headlamp -n tools`) |
+| http://pgadmin.localtest.me | PostgreSQL UI |
+| http://mongo.localtest.me | MongoDB UI |
+| http://redis.localtest.me | Redis UI |
+| http://traefik.localtest.me/dashboard/ | Ingress dashboard |
+
+Passwords are generated into `.env` (gitignored) on the first run. Template: [`.env.example`](.env.example).

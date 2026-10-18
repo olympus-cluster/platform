@@ -1,0 +1,64 @@
+# RedisInsight - web UI for Redis at http://redis.localtest.me
+# The "olympus redis" connection is pre-configured with the password from .env.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redisinsight
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: redisinsight }
+  template:
+    metadata:
+      labels: { app: redisinsight }
+    spec:
+      containers:
+        - name: redisinsight
+          image: redis/redisinsight:3.8
+          ports:
+            - containerPort: 5540
+          env:
+            - name: RI_REDIS_HOST
+              value: redis.data.svc
+            - name: RI_REDIS_PORT
+              value: "6379"
+            - name: RI_REDIS_ALIAS
+              value: olympus redis
+            - name: RI_REDIS_PASSWORD
+              valueFrom: { secretKeyRef: { name: redisinsight, key: redis-password } }
+          resources:
+            requests: { cpu: 20m, memory: 128Mi }
+            limits: { memory: 512Mi }
+          readinessProbe:
+            tcpSocket: { port: 5540 }
+            initialDelaySeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redisinsight
+spec:
+  selector: { app: redisinsight }
+  ports:
+    - port: 80
+      targetPort: 5540
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: redisinsight
+spec:
+  rules:
+    - host: redis.localtest.me
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: redisinsight, port: { number: 80 } }

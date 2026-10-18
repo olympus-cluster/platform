@@ -1,0 +1,87 @@
+# pgAdmin - web UI for PostgreSQL at http://pgadmin.localtest.me
+# Login: PGADMIN_EMAIL / PGADMIN_PASSWORD from .env.
+# The "olympus pg" server is pre-registered; it asks for POSTGRES_PASSWORD on first connect.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgadmin-servers
+data:
+  servers.json: |
+    {
+      "Servers": {
+        "1": {
+          "Name": "olympus pg",
+          "Group": "olympus",
+          "Host": "pg-rw.data.svc",
+          "Port": 5432,
+          "MaintenanceDB": "app",
+          "Username": "app",
+          "SSLMode": "prefer"
+        }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgadmin
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: pgadmin }
+  template:
+    metadata:
+      labels: { app: pgadmin }
+    spec:
+      containers:
+        - name: pgadmin
+          image: dpage/pgadmin4:9.18
+          ports:
+            - containerPort: 80
+          env:
+            - name: PGADMIN_DEFAULT_EMAIL
+              valueFrom: { secretKeyRef: { name: pgadmin, key: email } }
+            - name: PGADMIN_DEFAULT_PASSWORD
+              valueFrom: { secretKeyRef: { name: pgadmin, key: password } }
+            - name: PGADMIN_SERVER_JSON_FILE
+              value: /pgadmin4/servers.json
+          resources:
+            requests: { cpu: 50m, memory: 192Mi }
+            limits: { memory: 512Mi }
+          readinessProbe:
+            httpGet: { path: /misc/ping, port: 80 }
+            initialDelaySeconds: 15
+          volumeMounts:
+            - name: servers
+              mountPath: /pgadmin4/servers.json
+              subPath: servers.json
+            - name: data
+              mountPath: /var/lib/pgadmin
+      volumes:
+        - name: servers
+          configMap: { name: pgadmin-servers }
+        - name: data
+          emptyDir: {}      # UI settings reset on restart - fine for a lab
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgadmin
+spec:
+  selector: { app: pgadmin }
+  ports:
+    - port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pgadmin
+spec:
+  rules:
+    - host: pgadmin.localtest.me
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: pgadmin, port: { number: 80 } }

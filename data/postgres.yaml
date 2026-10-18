@@ -1,0 +1,23 @@
+# PostgreSQL managed by the CloudNativePG operator.
+# You describe the database you want; the operator creates the Pod, PVC, Services,
+# users and handles restarts/failover. (An "operator" = a controller that knows one app.)
+#
+# Inside the cluster connect to:  pg-rw.data.svc:5432   db=app  user=app
+# Password: Secret "pg-app" in namespace data (created by scripts/secrets.ps1).
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg
+spec:
+  instances: 1            # set to 3 to try replicas + automatic failover
+  storage:
+    size: 5Gi
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+      secret:
+        name: pg-app
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 1Gi }
